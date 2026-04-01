@@ -15,6 +15,14 @@
       --muted: rgba(233,238,255,.78);
     }
     *{ box-sizing:border-box; }
+
+    /* ✅ Prevent page scrolling / bounce on iPad Safari */
+    html, body{
+      height: 100%;
+      overflow: hidden;          /* stops normal scrollbars */
+      overscroll-behavior: none; /* prevents scroll chaining (where supported) */
+      touch-action: none;        /* stops touch panning/zoom gestures on the page */
+    }
     body{
       margin:0;
       min-height:100vh;
@@ -28,14 +36,16 @@
       font-family: system-ui, -apple-system, "PingFang HK", "PingFang TC", "Heiti TC", "Noto Sans CJK TC", Segoe UI, Roboto, Arial, sans-serif;
       padding: 14px;
       color: var(--text);
+      -webkit-text-size-adjust: 100%;
     }
 
+    /* If Safari's dynamic bars cause tiny scroll, lock layout into viewport */
     .app{
       width:min(900px, 100%);
-      background: linear-gradient(180deg, var(--panel), rgba(255,255,255,.02));
-      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.14);
       border-radius: 22px;
-      box-shadow: var(--shadow);
+      box-shadow: 0 14px 40px rgba(0,0,0,.42);
       padding: 16px;
       backdrop-filter: blur(10px);
     }
@@ -57,9 +67,10 @@
       font-weight: 800;
       letter-spacing: .2px;
       cursor:pointer;
+      touch-action: manipulation; /* allow taps without enabling scrolling */
     }
     .voiceBtn:focus{ outline:none; }
-    .voiceBtn:focus-visible{ box-shadow: 0 0 0 8px var(--focus); }
+    .voiceBtn:focus-visible{ box-shadow: 0 0 0 8px rgba(255,255,255,.22); }
 
     .board{
       display:grid;
@@ -77,10 +88,11 @@
       background: transparent;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation; /* allow tap/click, no pan */
     }
     .card:focus{ outline:none; }
     .card:focus-visible{
-      box-shadow: 0 0 0 8px var(--focus);
+      box-shadow: 0 0 0 8px rgba(255,255,255,.22);
       border-radius: 24px;
     }
 
@@ -172,7 +184,7 @@
       border-radius: 26px;
       border: 1px solid rgba(255,255,255,.20);
       background: rgba(20, 26, 48, .85);
-      box-shadow: var(--shadow);
+      box-shadow: 0 14px 40px rgba(0,0,0,.42);
       padding: 30px 18px;
       text-align:center;
     }
@@ -186,7 +198,7 @@
     }
     .goodSub{
       margin: 10px 0 0 0;
-      color: var(--muted);
+      color: rgba(233,238,255,.78);
       font-size: 18px;
       user-select:none;
     }
@@ -211,14 +223,17 @@
 
   <script>
     (function(){
+      /* ✅ Extra safety: prevent touchmove from scrolling (iOS) */
+      document.addEventListener('touchmove', function(e){
+        e.preventDefault();
+      }, { passive: false });
+
       const SHAPES = [
         { key: "circle",   color: "#ff3b30" },
         { key: "triangle", color: "#34c759" },
         { key: "square",   color: "#007aff" },
       ];
 
-      // ✅ UPDATED: match line in Cantonese for “good, it matched”
-      // Spoken Cantonese: "好嘢，啱啱相同！"
       const TXT_MATCH  = "好嘢，啱啱相同！";
       const TXT_WRONG  = "唔啱，唔相同！";
       const TXT_FINISH = "好叻呀！";
