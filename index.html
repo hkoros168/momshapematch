@@ -19,9 +19,9 @@
     /* ✅ Prevent page scrolling / bounce on iPad Safari */
     html, body{
       height: 100%;
-      overflow: hidden;          /* stops normal scrollbars */
-      overscroll-behavior: none; /* prevents scroll chaining (where supported) */
-      touch-action: none;        /* stops touch panning/zoom gestures on the page */
+      overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: none;
     }
     body{
       margin:0;
@@ -39,7 +39,6 @@
       -webkit-text-size-adjust: 100%;
     }
 
-    /* If Safari's dynamic bars cause tiny scroll, lock layout into viewport */
     .app{
       width:min(900px, 100%);
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
@@ -67,7 +66,8 @@
       font-weight: 800;
       letter-spacing: .2px;
       cursor:pointer;
-      touch-action: manipulation; /* allow taps without enabling scrolling */
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
     .voiceBtn:focus{ outline:none; }
     .voiceBtn:focus-visible{ box-shadow: 0 0 0 8px rgba(255,255,255,.22); }
@@ -88,7 +88,11 @@
       background: transparent;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation; /* allow tap/click, no pan */
+
+      /* ✅ Make taps feel instant on iPad */
+      touch-action: manipulation;        /* no double-tap zoom delay */
+      -webkit-touch-callout: none;       /* no callout on long press */
+      user-select: none;
     }
     .card:focus{ outline:none; }
     .card:focus-visible{
@@ -223,7 +227,7 @@
 
   <script>
     (function(){
-      /* ✅ Extra safety: prevent touchmove from scrolling (iOS) */
+      /* ✅ Prevent page scroll/bounce (iOS) */
       document.addEventListener('touchmove', function(e){
         e.preventDefault();
       }, { passive: false });
@@ -426,6 +430,21 @@
           inner.appendChild(back);
           cardBtn.appendChild(inner);
 
+          /* ✅ iPad: trigger on pointerdown/touchstart so it flips instantly.
+             We also keep click as a fallback for desktop/older browsers. */
+          const onPress = (e) => {
+            // prevent iOS "press-and-hold" behaviors and synthetic delayed clicks
+            if (e && typeof e.preventDefault === "function") e.preventDefault();
+            onPick(cardBtn);
+          };
+
+          // Pointer Events (modern iPadOS Safari supports this)
+          cardBtn.addEventListener('pointerdown', onPress, { passive: false });
+
+          // Fallback for older iOS / edge cases
+          cardBtn.addEventListener('touchstart', onPress, { passive: false });
+
+          // Fallback for mouse/keyboard
           cardBtn.addEventListener('click', () => onPick(cardBtn));
           cardBtn.addEventListener('keydown', (e) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -479,7 +498,7 @@
 
           if(matches === 3){
             playFinishSound();
-            showGood();
+            goodOverlay.classList.add('show');
             speak(TXT_FINISH);
 
             lock = true;
