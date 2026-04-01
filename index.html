@@ -16,7 +16,6 @@
     }
     *{ box-sizing:border-box; }
 
-    /* ✅ Prevent page scrolling / bounce on iPad Safari */
     html, body{
       height: 100%;
       overflow: hidden;
@@ -88,10 +87,8 @@
       background: transparent;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
-
-      /* ✅ Make taps feel instant on iPad */
-      touch-action: manipulation;        /* no double-tap zoom delay */
-      -webkit-touch-callout: none;       /* no callout on long press */
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
       user-select: none;
     }
     .card:focus{ outline:none; }
@@ -155,7 +152,7 @@
       width: min(760px, calc(100% - 24px));
       padding: 14px 16px;
       border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.18);
+      border:  1px solid rgba(255,255,255,.18);
       background: rgba(0,0,0,.35);
       box-shadow: 0 10px 26px rgba(0,0,0,.35);
       text-align: center;
@@ -227,7 +224,6 @@
 
   <script>
     (function(){
-      /* ✅ Prevent page scroll/bounce (iOS) */
       document.addEventListener('touchmove', function(e){
         e.preventDefault();
       }, { passive: false });
@@ -239,7 +235,7 @@
       ];
 
       const TXT_MATCH  = "好嘢，啱啱相同！";
-      const TXT_WRONG  = "唔啱，唔相同！";
+      const TXT_WRONG  = "唔啱呀，記住個形狀。";
       const TXT_FINISH = "好叻呀！";
 
       const boardEl = document.getElementById('board');
@@ -430,21 +426,14 @@
           inner.appendChild(back);
           cardBtn.appendChild(inner);
 
-          /* ✅ iPad: trigger on pointerdown/touchstart so it flips instantly.
-             We also keep click as a fallback for desktop/older browsers. */
           const onPress = (e) => {
-            // prevent iOS "press-and-hold" behaviors and synthetic delayed clicks
             if (e && typeof e.preventDefault === "function") e.preventDefault();
             onPick(cardBtn);
           };
 
-          // Pointer Events (modern iPadOS Safari supports this)
           cardBtn.addEventListener('pointerdown', onPress, { passive: false });
-
-          // Fallback for older iOS / edge cases
           cardBtn.addEventListener('touchstart', onPress, { passive: false });
 
-          // Fallback for mouse/keyboard
           cardBtn.addEventListener('click', () => onPick(cardBtn));
           cardBtn.addEventListener('keydown', (e) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -498,7 +487,7 @@
 
           if(matches === 3){
             playFinishSound();
-            goodOverlay.classList.add('show');
+            showGood();
             speak(TXT_FINISH);
 
             lock = true;
@@ -507,8 +496,9 @@
         } else {
           playWrongSound();
           showMsg(TXT_WRONG, "bad");
-          speak(TXT_WRONG);
+          setTimeout(() => speak(TXT_WRONG), 20);
 
+          /* ✅ CHANGED: wait 3 seconds before flipping back */
           lock = true;
           setTimeout(() => {
             setFlipped(firstPick, false);
@@ -516,7 +506,7 @@
             firstPick = null;
             secondPick = null;
             lock = false;
-          }, 750);
+          }, 3000);
         }
       }
 
