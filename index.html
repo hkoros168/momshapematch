@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shape Match (6 Cards)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel: rgba(255,255,255,.06);
+      --border: rgba(255,255,255,.14);
+      --shadow: 0 14px 40px rgba(0,0,0,.42);
+      --focus: rgba(255,255,255,.22);
+      --text: rgba(233,238,255,.98);
+      --muted: rgba(233,238,255,.78);
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:
+        radial-gradient(1200px 800px at 20% 0%, #182a66 0%, rgba(24,42,102,0) 55%),
+        radial-gradient(900px 700px at 80% 100%, #3a1a66 0%, rgba(58,26,102,0) 55%),
+        var(--bg);
+      font-family: system-ui, -apple-system, "PingFang HK", "PingFang TC", "Heiti TC", "Noto Sans CJK TC", Segoe UI, Roboto, Arial, sans-serif;
+      padding: 14px;
+      color: var(--text);
+    }
+
+    .app{
+      width:min(900px, 100%);
+      background: linear-gradient(180deg, var(--panel), rgba(255,255,255,.02));
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:center;
+      margin-bottom: 12px;
+    }
+
+    .voiceBtn{
+      appearance:none;
+      border: 1px solid rgba(255,255,255,.20);
+      background: rgba(0,0,0,.25);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: .2px;
+      cursor:pointer;
+    }
+    .voiceBtn:focus{ outline:none; }
+    .voiceBtn:focus-visible{ box-shadow: 0 0 0 8px var(--focus); }
+
+    .board{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .card{
+      position: relative;
+      height: clamp(170px, 23vw, 250px);
+      border-radius: 22px;
+      perspective: 1000px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .card:focus{ outline:none; }
+    .card:focus-visible{
+      box-shadow: 0 0 0 8px var(--focus);
+      border-radius: 24px;
+    }
+
+    .inner{
+      position:absolute;
+      inset:0;
+      border-radius: 22px;
+      transform-style: preserve-3d;
+      transition: transform 220ms ease;
+    }
+    .card.flipped .inner{ transform: rotateY(180deg); }
+    .card.matched .inner{ transform: rotateY(180deg); }
+    .card.matched{ pointer-events:none; }
+
+    .face{
+      position:absolute;
+      inset:0;
+      border-radius: 22px;
+      backface-visibility:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border: 1px solid rgba(255,255,255,.16);
+      overflow:hidden;
+    }
+
+    .front{
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+    }
+    .frontLabel{
+      position:relative;
+      font-weight: 950;
+      letter-spacing: 2px;
+      color: var(--text);
+      font-size: clamp(28px, 4vw, 42px);
+      user-select:none;
+    }
+
+    .back{
+      transform: rotateY(180deg);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+    }
+    .shapeWrap{
+      width: 84%;
+      height: 84%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .msg{
+      position: fixed;
+      left: 50%;
+      top: 14px;
+      transform: translateX(-50%);
+      width: min(760px, calc(100% - 24px));
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.35);
+      box-shadow: 0 10px 26px rgba(0,0,0,.35);
+      text-align: center;
+      font-weight: 950;
+      font-size: clamp(22px, 4vw, 36px);
+      letter-spacing: .5px;
+      color: var(--text);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease;
+      backdrop-filter: blur(6px);
+    }
+    .msg.show{ opacity: 1; }
+    .msg.good{ border-color: rgba(47,224,122,.45); }
+    .msg.bad{ border-color: rgba(255,59,48,.45); }
+
+    .overlay{
+      position: fixed;
+      inset: 0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background: rgba(0,0,0,.50);
+      backdrop-filter: blur(4px);
+      padding: 18px;
+    }
+    .overlay.show{ display:flex; }
+    .goodBox{
+      width: min(620px, 100%);
+      border-radius: 26px;
+      border: 1px solid rgba(255,255,255,.20);
+      background: rgba(20, 26, 48, .85);
+      box-shadow: var(--shadow);
+      padding: 30px 18px;
+      text-align:center;
+    }
+    .goodWord{
+      font-weight: 950;
+      font-size: clamp(60px, 12vw, 96px);
+      letter-spacing: 6px;
+      color: var(--text);
+      margin: 0;
+      user-select:none;
+    }
+    .goodSub{
+      margin: 10px 0 0 0;
+      color: var(--muted);
+      font-size: 18px;
+      user-select:none;
+    }
+  </style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="Shape matching game">
+    <div class="topbar">
+      <button class="voiceBtn" id="voiceBtn" type="button">🔊 聽聲（撳一次）</button>
+    </div>
+    <div class="board" id="board" aria-label="Card grid"></div>
+  </div>
+
+  <div class="msg" id="msg" aria-live="polite"></div>
+
+  <div class="overlay" id="goodOverlay" aria-live="polite" aria-label="Completion message">
+    <div class="goodBox" role="dialog" aria-modal="true" aria-label="Good job message">
+      <div class="goodWord">好叻呀！</div>
+      <div class="goodSub">就嚟重新開始…</div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const SHAPES = [
+        { key: "circle",   color: "#ff3b30" },
+        { key: "triangle", color: "#34c759" },
+        { key: "square",   color: "#007aff" },
+      ];
+
+      const TXT_MATCH  = "好叻呀！";
+      const TXT_WRONG  = "唔啱，唔相同！";  // updated
+      const TXT_FINISH = "好叻呀！";
+
+      const boardEl = document.getElementById('board');
+      const goodOverlay = document.getElementById('goodOverlay');
+      const msgEl = document.getElementById('msg');
+      const voiceBtn = document.getElementById('voiceBtn');
+
+      let deck = [];
+      let firstPick = null;
+      let secondPick = null;
+      let lock = false;
+      let matches = 0;
+      let autoResetTimer = null;
+      let msgTimer = null;
+
+      // WebAudio beeps
+      let audioCtx = null;
+      function ensureAudio(){
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) audioCtx = new AC();
+        }
+        if (audioCtx && audioCtx.state === "suspended") {
+          audioCtx.resume().catch(()=>{});
+        }
+      }
+      function beep({freq=440, duration=0.12, type="sine", gain=0.06} = {}){
+        if (!audioCtx) return;
+        const t0 = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, t0);
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(gain, t0 + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+        osc.start(t0);
+        osc.stop(t0 + duration + 0.02);
+      }
+      function playMatchSound(){
+        beep({freq: 784, duration: 0.10, type:"sine", gain:0.07});
+        setTimeout(() => beep({freq: 988, duration: 0.12, type:"sine", gain:0.07}), 110);
+      }
+      function playWrongSound(){
+        beep({freq: 220, duration: 0.11, type:"triangle", gain:0.08});
+        setTimeout(() => beep({freq: 196, duration: 0.13, type:"triangle", gain:0.08}), 120);
+      }
+      function playFinishSound(){
+        const notes = [523, 659, 784, 1046];
+        notes.forEach((f, i) => setTimeout(() => beep({freq:f, duration:0.10, type:"sine", gain:0.07}), i*95));
+      }
+
+      // Speech synthesis (Cantonese)
+      let cachedVoices = [];
+      let cantVoice = null;
+      let speechEnabled = false;
+
+      function refreshVoices(){
+        if (!("speechSynthesis" in window)) return;
+        cachedVoices = window.speechSynthesis.getVoices() || [];
+        cantVoice = pickCantoneseVoice(cachedVoices);
+      }
+
+      function pickCantoneseVoice(voices){
+        const norm = (s) => String(s || "").toLowerCase();
+        let v = voices.find(v => norm(v.lang).startsWith("zh-hk"));
+        if (v) return v;
+
+        const nameHints = ["sin-ji","sinji","hong kong","hk","cantonese","粵","粤"];
+        v = voices.find(v => nameHints.some(h => norm(v.name).includes(h)));
+        if (v) return v;
+
+        v = voices.find(v => norm(v.lang).startsWith("zh"));
+        return v || null;
+      }
+
+      if ("speechSynthesis" in window) {
+        refreshVoices();
+        window.speechSynthesis.onvoiceschanged = () => refreshVoices();
+      }
+
+      function speak(text){
+        if (!speechEnabled) return;
+        if (!("speechSynthesis" in window)) return;
+
+        try { window.speechSynthesis.cancel(); } catch(e){}
+
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "zh-HK";
+        if (cantVoice) u.voice = cantVoice;
+        u.rate = 0.95;
+        u.pitch = 1.0;
+        u.volume = 1.0;
+
+        try { window.speechSynthesis.speak(u); } catch(e){}
+      }
+
+      voiceBtn.addEventListener("click", () => {
+        ensureAudio();
+        refreshVoices();
+        speechEnabled = true;
+        voiceBtn.textContent = "🔊 已開聲";
+        speak("你好！");
+      });
+
+      function showMsg(text, kind){
+        clearTimeout(msgTimer);
+        msgEl.textContent = text;
+        msgEl.classList.remove('good','bad','show');
+        msgEl.classList.add(kind);
+        void msgEl.offsetWidth;
+        msgEl.classList.add('show');
+        msgTimer = setTimeout(() => msgEl.classList.remove('show'), 900);
+      }
+
+      function shuffle(arr){
+        for(let i = arr.length - 1; i > 0; i--){
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+
+      function buildDeck(){
+        const d = [];
+        SHAPES.forEach((s) => {
+          d.push({ id: cryptoRandomId(), shape: s.key, color: s.color });
+          d.push({ id: cryptoRandomId(), shape: s.key, color: s.color });
+        });
+        return shuffle(d);
+      }
+
+      function cryptoRandomId(){
+        if (window.crypto && crypto.getRandomValues) {
+          const buf = new Uint32Array(2);
+          crypto.getRandomValues(buf);
+          return buf[0].toString(16) + buf[1].toString(16);
+        }
+        return Math.random().toString(16).slice(2) + Date.now().toString(16);
+      }
+
+      function showGood(){ goodOverlay.classList.add('show'); }
+      function hideGood(){ goodOverlay.classList.remove('show'); }
+
+      function resetState(){
+        firstPick = null;
+        secondPick = null;
+        lock = false;
+        matches = 0;
+        clearTimeout(autoResetTimer);
+        autoResetTimer = null;
+        hideGood();
+        clearTimeout(msgTimer);
+        msgEl.classList.remove('show');
+      }
+
+      function render(){
+        boardEl.innerHTML = "";
+        deck.forEach((card, idx) => {
+          const cardBtn = document.createElement('button');
+          cardBtn.type = "button";
+          cardBtn.className = "card";
+          cardBtn.setAttribute('data-id', card.id);
+          cardBtn.setAttribute('data-shape', card.shape);
+          cardBtn.setAttribute('aria-label', 'Card ' + (idx + 1));
+
+          const inner = document.createElement('div');
+          inner.className = "inner";
+
+          const front = document.createElement('div');
+          front.className = "face front";
+          const frontLabel = document.createElement('div');
+          frontLabel.className = "frontLabel";
+          frontLabel.textContent = "撳";
+          front.appendChild(frontLabel);
+
+          const back = document.createElement('div');
+          back.className = "face back";
+
+          const wrap = document.createElement('div');
+          wrap.className = "shapeWrap";
+          wrap.appendChild(makeShapeSVG(card.shape, card.color, idx));
+          back.appendChild(wrap);
+
+          inner.appendChild(front);
+          inner.appendChild(back);
+          cardBtn.appendChild(inner);
+
+          cardBtn.addEventListener('click', () => onPick(cardBtn));
+          cardBtn.addEventListener('keydown', (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onPick(cardBtn);
+            }
+          });
+
+          boardEl.appendChild(cardBtn);
+        });
+      }
+
+      function setFlipped(el, flipped){
+        el.classList.toggle('flipped', flipped);
+      }
+      function setMatched(el, matched){
+        el.classList.toggle('matched', matched);
+      }
+
+      function onPick(cardEl){
+        ensureAudio();
+        refreshVoices();
+
+        if(lock) return;
+        if(cardEl.classList.contains('matched')) return;
+        if(cardEl === firstPick) return;
+        if(cardEl.classList.contains('flipped')) return;
+
+        setFlipped(cardEl, true);
+
+        if(!firstPick){
+          firstPick = cardEl;
+          return;
+        }
+
+        secondPick = cardEl;
+        const a = firstPick.getAttribute('data-shape');
+        const b = secondPick.getAttribute('data-shape');
+
+        if(a === b){
+          setMatched(firstPick, true);
+          setMatched(secondPick, true);
+          matches += 1;
+
+          playMatchSound();
+          showMsg(TXT_MATCH, "good");
+          speak(TXT_MATCH);
+
+          firstPick = null;
+          secondPick = null;
+
+          if(matches === 3){
+            playFinishSound();
+            showGood();
+            speak(TXT_FINISH);
+
+            lock = true;
+            autoResetTimer = setTimeout(() => startNewGame(), 1600);
+          }
+        } else {
+          playWrongSound();
+          showMsg(TXT_WRONG, "bad");
+          speak(TXT_WRONG);
+
+          lock = true;
+          setTimeout(() => {
+            setFlipped(firstPick, false);
+            setFlipped(secondPick, false);
+            firstPick = null;
+            secondPick = null;
+            lock = false;
+          }, 750);
+        }
+      }
+
+      function startNewGame(){
+        resetState();
+        deck = buildDeck();
+        render();
+        lock = false;
+      }
+
+      function makeShapeSVG(shapeKey, color, idx){
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute("viewBox", "0 0 100 100");
+        svg.setAttribute("width", "100%");
+        svg.setAttribute("height", "100%");
+
+        const fId = `shadow_${idx}`;
+        const defs = document.createElementNS(svgNS, "defs");
+        defs.innerHTML = `
+          <filter id="${fId}" x="-25%" y="-25%" width="150%" height="150%">
+            <feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="rgba(0,0,0,.35)"/>
+          </filter>
+        `;
+        svg.appendChild(defs);
+
+        let shape;
+        if(shapeKey === "circle"){
+          shape = document.createElementNS(svgNS, "circle");
+          shape.setAttribute("cx","50");
+          shape.setAttribute("cy","52");
+          shape.setAttribute("r","26");
+        } else if(shapeKey === "triangle"){
+          shape = document.createElementNS(svgNS, "path");
+          shape.setAttribute("d","M 50 20 L 80 76 L 20 76 Z");
+        } else {
+          shape = document.createElementNS(svgNS, "rect");
+          shape.setAttribute("x","24");
+          shape.setAttribute("y","26");
+          shape.setAttribute("width","52");
+          shape.setAttribute("height","52");
+          shape.setAttribute("rx","10");
+        }
+
+        shape.setAttribute("fill", color);
+        shape.setAttribute("filter", `url(#${fId})`);
+        shape.setAttribute("stroke", "rgba(255,255,255,.22)");
+        shape.setAttribute("stroke-width", "2.2");
+
+        svg.appendChild(shape);
+        return svg;
+      }
+
+      startNewGame();
+    })();
+  </script>
+</body>
+</html>
