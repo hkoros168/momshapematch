@@ -50,7 +50,7 @@
     .layout{
       width: min(1100px, 100%);
       display: grid;
-      grid-template-columns: 1fr 320px;
+      grid-template-columns: 1fr 360px;
       gap: 14px;
       align-items: start;
     }
@@ -64,7 +64,7 @@
       border: 1px solid var(--panelBorder);
       border-radius: 22px;
       box-shadow: var(--panelShadow);
-      padding: 16px;
+      padding: 18px;
       backdrop-filter: blur(10px);
     }
 
@@ -79,9 +79,9 @@
       background: rgba(0,0,0,.25);
       color: var(--text);
       border-radius: 999px;
-      padding: 12px 18px;
-      font-size: 18px;
-      font-weight: 800;
+      padding: 16px 22px;
+      font-size: 24px;            /* BIGGER */
+      font-weight: 950;
       letter-spacing: .2px;
       cursor:pointer;
       touch-action: manipulation;
@@ -91,9 +91,7 @@
     .voiceBtn:focus-visible{ box-shadow: 0 0 0 8px var(--focus); }
 
     /* Canvas container */
-    .stageWrap{
-      width: 100%;
-    }
+    .stageWrap{ width: 100%; }
     canvas{
       width: 100%;
       height: auto;
@@ -103,62 +101,68 @@
       touch-action: none;
       -webkit-tap-highlight-color: transparent;
     }
-    canvas:focus-visible{
-      box-shadow: 0 0 0 8px var(--focus);
-    }
+    canvas:focus-visible{ box-shadow: 0 0 0 8px var(--focus); }
 
-    /* Side instructions */
+    /* ✅ EVEN BIGGER instructions */
+    .help{
+      padding: 24px 22px;
+    }
     .help h2{
-      margin: 0 0 10px 0;
-      font-size: 26px;
+      margin: 0 0 14px 0;
+      font-size: 46px;           /* BIGGER */
       font-weight: 950;
       letter-spacing: .3px;
+      line-height: 1.1;
     }
     .help .big{
-      font-size: 22px;
-      font-weight: 900;
+      font-size: 36px;           /* BIGGER */
+      font-weight: 950;
       line-height: 1.25;
-      margin: 10px 0;
+      margin: 12px 0 18px 0;
+      color: var(--text);
     }
     .help .step{
       display:flex;
-      gap: 10px;
+      gap: 16px;
       align-items:flex-start;
-      margin: 12px 0;
+      margin: 18px 0;
     }
     .help .num{
-      width: 34px;
-      height: 34px;
-      border-radius: 12px;
+      width: 60px;              /* BIGGER */
+      height: 60px;
+      border-radius: 20px;
       display:flex;
       align-items:center;
       justify-content:center;
       background: rgba(0,0,0,.25);
-      border: 1px solid rgba(255,255,255,.18);
+      border: 2px solid rgba(255,255,255,.18);
       font-weight: 950;
-      font-size: 20px;
+      font-size: 36px;          /* BIGGER */
       flex: 0 0 auto;
+      line-height: 1;
     }
     .help .text{
-      font-size: 22px;
-      font-weight: 900;
+      font-size: 36px;          /* BIGGER */
+      font-weight: 950;
       line-height: 1.25;
+      letter-spacing: .2px;
     }
 
+    /* Message is already large; bump it too */
     .msg{
       position: fixed;
       left: 50%;
       top: 14px;
       transform: translateX(-50%);
-      width: min(760px, calc(100% - 24px));
-      padding: 14px 16px;
+      width: min(820px, calc(100% - 24px));
+      padding: 16px 18px;
       border-radius: 18px;
       border:  1px solid rgba(255,255,255,.18);
       background: rgba(0,0,0,.35);
       box-shadow: 0 10px 26px rgba(0,0,0,.35);
       text-align: center;
       font-weight: 950;
-      font-size: clamp(22px, 4vw, 36px);
+      font-size: clamp(26px, 4.6vw, 44px);  /* BIGGER */
       letter-spacing: .5px;
       color: var(--text);
       opacity: 0;
@@ -182,18 +186,18 @@
     }
     .overlay.show{ display:flex; }
     .goodBox{
-      width: min(620px, 100%);
+      width: min(680px, 100%);
       border-radius: 26px;
       border: 1px solid rgba(255,255,255,.20);
       background: rgba(20, 26, 48, .85);
       box-shadow: 0 14px 40px rgba(0,0,0,.42);
-      padding: 30px 18px;
+      padding: 32px 18px;
       text-align:center;
     }
     .goodWord{
       font-weight: 950;
-      font-size: clamp(60px, 12vw, 96px);
-      letter-spacing: 6px;
+      font-size: clamp(76px, 14vw, 120px); /* BIGGER */
+      letter-spacing: 8px;
       color: var(--text);
       margin: 0;
       user-select:none;
@@ -201,8 +205,19 @@
     .goodSub{
       margin: 10px 0 0 0;
       color: var(--muted);
-      font-size: 18px;
+      font-size: 24px;          /* BIGGER */
       user-select:none;
+      font-weight: 800;
+    }
+
+    /* Narrow screens: still big, but safe */
+    @media (max-width: 420px){
+      .help h2{ font-size: 40px; }
+      .help .big{ font-size: 32px; }
+      .help .num{ width: 56px; height: 56px; font-size: 34px; }
+      .help .text{ font-size: 32px; }
+      .voiceBtn{ font-size: 22px; padding: 14px 18px; }
+      .goodSub{ font-size: 22px; }
     }
   </style>
 </head>
@@ -239,29 +254,25 @@
 
   <script>
     (function(){
-      // Prevent page scroll
       document.addEventListener('touchmove', (e) => e.preventDefault(), { passive:false });
 
-      // --- Text ---
       const TXT_MATCH  = "好嘢，啱啱相同！";
-      const TXT_WRONG  = "唔啱呀，記住個顏色。"; // ✅ wrong, remember the color (Cantonese)
+      const TXT_WRONG  = "唔啱呀，記住個顏色。";
       const TXT_FINISH = "好叻呀！";
 
-      // --- Game config ---
       const SHAPES = [
         { key: "circle",   color: "#ff3b30" },
         { key: "triangle", color: "#34c759" },
         { key: "square",   color: "#007aff" },
       ];
       const COLS = 3, ROWS = 2;
-      const GAP = 16;              // logical px (will scale with DPR)
+      const GAP = 16;
       const PADDING = 10;
 
-      const FLIP_MS = 220;         // flip animation
-      const WRONG_WAIT_MS = 3000;  // ✅ 3 seconds before flipping back
+      const FLIP_MS = 220;
+      const WRONG_WAIT_MS = 3000;
       const END_RESET_MS = 1600;
 
-      // --- Elements ---
       const canvas = document.getElementById('stage');
       const ctx = canvas.getContext('2d');
 
@@ -269,7 +280,6 @@
       const goodOverlay = document.getElementById('goodOverlay');
       const voiceBtn = document.getElementById('voiceBtn');
 
-      // --- Audio (beeps) ---
       let audioCtx = null;
       function ensureAudio(){
         if (!audioCtx) {
@@ -306,7 +316,6 @@
         notes.forEach((f, i) => setTimeout(() => beep({freq:f, duration:0.10, type:"sine", gain:0.07}), i*95));
       }
 
-      // --- Speech (Cantonese) ---
       let cachedVoices = [];
       let cantVoice = null;
       let speechEnabled = false;
@@ -350,7 +359,6 @@
         speak("你好！");
       });
 
-      // --- UI message ---
       let msgTimer = null;
       function showMsg(text, kind){
         clearTimeout(msgTimer);
@@ -362,7 +370,6 @@
         msgTimer = setTimeout(() => msgEl.classList.remove('show'), 900);
       }
 
-      // --- Helpers ---
       function shuffle(arr){
         for(let i = arr.length - 1; i > 0; i--){
           const j = Math.floor(Math.random() * (i + 1));
@@ -379,7 +386,6 @@
         return Math.random().toString(16).slice(2) + Date.now().toString(16);
       }
 
-      // --- Card model ---
       function makeDeck(){
         const d = [];
         SHAPES.forEach(s => {
@@ -390,14 +396,13 @@
           ...c,
           flipped: false,
           matched: false,
-          // anim: 0 => face-down, 1 => face-up
           anim: 0,
           target: 0,
         }));
       }
 
       let deck = [];
-      let rects = []; // card hit areas in canvas coords
+      let rects = [];
       let first = null;
       let second = null;
       let lock = false;
@@ -405,26 +410,18 @@
       let wrongTimer = null;
       let resetTimer = null;
 
-      function showGood(){ goodOverlay.classList.add('show'); }
-      function hideGood(){ goodOverlay.classList.remove('show'); }
-
       function resetState(){
-        first = null;
-        second = null;
-        lock = false;
-        matches = 0;
+        first = null; second = null; lock = false; matches = 0;
         clearTimeout(wrongTimer); wrongTimer = null;
         clearTimeout(resetTimer); resetTimer = null;
-        hideGood();
+        goodOverlay.classList.remove('show');
         clearTimeout(msgTimer);
         msgEl.classList.remove('show');
       }
 
-      // --- Canvas sizing ---
       function resizeCanvas(){
         const wrap = canvas.parentElement;
         const cssW = wrap.clientWidth;
-        // Make canvas height based on card aspect; 2 rows.
         const cssH = Math.round(cssW * 0.72);
 
         const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
@@ -433,7 +430,7 @@
         canvas.style.height = cssH + "px";
         canvas.style.width = cssW + "px";
 
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         layoutCards(cssW, cssH);
         draw();
       }
@@ -457,7 +454,6 @@
         }
       }
 
-      // --- Drawing primitives ---
       function roundRectPath(x,y,w,h,r){
         const rr = Math.min(r, w/2, h/2);
         ctx.beginPath();
@@ -470,7 +466,6 @@
       }
 
       function drawCardFace(rect, isFront){
-        // shadow
         ctx.save();
         ctx.shadowColor = "rgba(0,0,0,.28)";
         ctx.shadowBlur = 18;
@@ -489,25 +484,21 @@
         ctx.fill();
         ctx.restore();
 
-        // border
         roundRectPath(rect.x, rect.y, rect.w, rect.h, rect.r);
         ctx.lineWidth = 2;
         ctx.strokeStyle = "rgba(20, 30, 55, .25)";
         ctx.stroke();
 
-        // inner border
         roundRectPath(rect.x+10, rect.y+10, rect.w-20, rect.h-20, Math.max(10, rect.r-4));
         ctx.lineWidth = 2;
         ctx.strokeStyle = "rgba(20, 30, 55, .10)";
         ctx.stroke();
 
         if (isFront){
-          // pattern
           ctx.save();
           roundRectPath(rect.x, rect.y, rect.w, rect.h, rect.r);
           ctx.clip();
 
-          // diagonal stripes
           ctx.globalAlpha = 0.08;
           ctx.strokeStyle = "rgba(20,30,55,1)";
           ctx.lineWidth = 6;
@@ -519,7 +510,6 @@
             ctx.stroke();
           }
 
-          // soft blobs
           ctx.globalAlpha = 0.14;
           const g1 = ctx.createRadialGradient(rect.x+rect.w*0.3, rect.y+rect.h*0.2, 0, rect.x+rect.w*0.3, rect.y+rect.h*0.2, rect.w*0.8);
           g1.addColorStop(0, "rgba(0,122,255,1)");
@@ -535,10 +525,9 @@
 
           ctx.restore();
 
-          // "撳"
           ctx.save();
           ctx.fillStyle = "rgba(20, 30, 55, .92)";
-          ctx.font = `900 ${Math.max(34, Math.floor(rect.w * 0.22))}px system-ui, -apple-system, "PingFang HK", "PingFang TC", sans-serif`;
+          ctx.font = `900 ${Math.max(44, Math.floor(rect.w * 0.26))}px system-ui, -apple-system, "PingFang HK", "PingFang TC", sans-serif`; /* BIGGER on cards */
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           ctx.fillText("撳", rect.x + rect.w/2, rect.y + rect.h/2);
@@ -551,7 +540,6 @@
         const cy = rect.y + rect.h/2 + rect.h*0.03;
         const size = Math.min(rect.w, rect.h) * 0.30;
 
-        // shadow under shape
         ctx.save();
         ctx.shadowColor = "rgba(0,0,0,.28)";
         ctx.shadowBlur = 14;
@@ -578,7 +566,7 @@
           ctx.arcTo(x, y, x+s, y, r);
           ctx.closePath();
           ctx.fill(); ctx.stroke();
-        } else { // triangle
+        } else {
           ctx.beginPath();
           ctx.moveTo(cx, cy - size*1.45);
           ctx.lineTo(cx + size*1.35, cy + size*1.15);
@@ -592,28 +580,22 @@
       function draw(){
         const w = canvas.clientWidth;
         const h = parseFloat(canvas.style.height) || (canvas.height / (window.devicePixelRatio||1));
-
-        // clear
         ctx.clearRect(0,0,w,h);
 
-        // draw each card with flip animation using x-scale
         for(let i=0; i<deck.length; i++){
           const card = deck[i];
           const rect = rects[i];
           if (!rect) continue;
 
-          // update anim towards target
           const speed = 1 / Math.max(1, Math.round(FLIP_MS / 16));
           if (card.anim < card.target) card.anim = Math.min(card.target, card.anim + speed);
           if (card.anim > card.target) card.anim = Math.max(card.target, card.anim - speed);
 
-          // Map anim [0..1] to "flip": shrink to 0 at mid
-          const t = card.anim; // 0 front, 1 back
-          const scaleX = Math.abs(Math.cos(t * Math.PI)); // 1 -> 0 -> 1
-          const showBack = t > 0.5; // after midpoint, show back face
+          const t = card.anim;
+          const scaleX = Math.abs(Math.cos(t * Math.PI));
+          const showBack = t > 0.5;
 
           ctx.save();
-          // transform around center
           const cx = rect.x + rect.w/2;
           const cy = rect.y + rect.h/2;
           ctx.translate(cx, cy);
@@ -621,15 +603,11 @@
           ctx.translate(-cx, -cy);
 
           drawCardFace(rect, !showBack);
-
-          if (showBack){
-            drawShape(rect, card);
-          }
+          if (showBack) drawShape(rect, card);
 
           ctx.restore();
         }
 
-        // keep animating if any card still moving
         if (deck.some(c => Math.abs(c.anim - c.target) > 0.001)) {
           requestAnimationFrame(draw);
         }
@@ -651,11 +629,8 @@
 
         const card = deck[index];
         if (!card || card.matched) return;
-
-        // ignore if already face-up
         if (card.target === 1) return;
 
-        // flip up
         card.target = 1;
         requestAnimationFrame(draw);
 
@@ -664,8 +639,6 @@
           return;
         }
         if (second !== null) return;
-
-        // prevent choosing same card twice
         if (index === first) return;
 
         second = index;
@@ -688,7 +661,7 @@
           if (matches === 3){
             lock = true;
             playFinishSound();
-            showGood();
+            goodOverlay.classList.add('show');
             speak(TXT_FINISH);
             resetTimer = setTimeout(startNewGame, END_RESET_MS);
           }
@@ -712,12 +685,10 @@
       function startNewGame(){
         resetState();
         deck = makeDeck();
-        // ensure all face-down
         deck.forEach(c => { c.anim = 0; c.target = 0; });
         resizeCanvas();
       }
 
-      // Input handling (pointer)
       canvas.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         const rect = canvas.getBoundingClientRect();
@@ -727,7 +698,6 @@
         if (idx >= 0) pick(idx);
       }, { passive:false });
 
-      // Keyboard: pick cards 1-6
       canvas.addEventListener('keydown', (e) => {
         const k = e.key;
         if (k >= "1" && k <= "6"){
@@ -737,8 +707,6 @@
       });
 
       window.addEventListener('resize', () => resizeCanvas());
-
-      // Start
       startNewGame();
     })();
   </script>
